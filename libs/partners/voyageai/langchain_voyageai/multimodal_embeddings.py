@@ -51,7 +51,7 @@ class VoyageAIMultimodalEmbeddings(BaseModel, MultimodalEmbeddings):
     @classmethod
     def _langchain_content_to_content(cls, content: Content) -> dict:
         result = {
-            "type": content.type
+            "type": content.type.value
         }
         if content.text is not None:
             result["text"] = content.text
