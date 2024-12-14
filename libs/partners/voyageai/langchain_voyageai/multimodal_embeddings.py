@@ -13,6 +13,7 @@ from pydantic import (
 from typing_extensions import Self
 
 from langchain_core.embeddings import MultimodalEmbeddings, MultimodalInput, Content
+from langchain_core.embeddings.multimodal_embeddings import ContentType
 from langchain_core.utils import secret_from_env
 
 logger = logging.getLogger(__name__)
@@ -53,12 +54,12 @@ class VoyageAIMultimodalEmbeddings(BaseModel, MultimodalEmbeddings):
         result = {
             "type": content.type.value
         }
-        if content.text is not None:
-            result["text"] = content.text
-        if content.image_url is not None:
-            result["image_url"] = content.image_url
-        if content.image_base64 is not None:
-            result["image_base64"] = content.image_base64
+        if content.type == ContentType.text:
+            result["text"] = content.data
+        elif content.type == ContentType.image_url:
+            result["image_url"] = content.data
+        elif content.type == ContentType.image_base64:
+            result["image_base64"] = content.data
 
         return result
 
