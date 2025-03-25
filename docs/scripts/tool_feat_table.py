@@ -86,14 +86,6 @@ CODE_INTERPRETER_TOOL_FEAT_TABLE = {
         "link": "/docs/integrations/tools/riza",
         "self_hosting": True,
     },
-    "E2B Data Analysis": {
-        "langauges": "Python. In beta: JavaScript, R, Java",
-        "sandbox_lifetime": "24 Hours",
-        "upload": True,
-        "return_results": "Text, Images, Videos",
-        "link": "/docs/integrations/tools/e2b_data_analysis",
-        "self_hosting": True,
-    },
     "Azure Container Apps dynamic sessions": {
         "langauges": "Python",
         "sandbox_lifetime": "1 Hour",
@@ -154,6 +146,11 @@ WEBBROWSING_TOOL_FEAT_TABLE = {
         "link": "/docs/integrations/tools/multion",
         "interactions": True,
         "pricing": "40 free requests/day",
+    },
+    "AgentQL Toolkit": {
+        "link": "/docs/integrations/tools/agentql",
+        "interactions": True,
+        "pricing": "Free trial, with pay-as-you-go and flat rate plans after",
     },
 }
 

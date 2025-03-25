@@ -75,6 +75,7 @@ class LanceDB(VectorStore):
     ):
         """Initialize with Lance DB vectorstore"""
         lancedb = guard_import("lancedb")
+        lancedb.remote.table = guard_import("lancedb.remote.table")
         self._embedding = embedding
         self._vector_key = vector_key
         self._id_key = id_key
@@ -562,7 +563,7 @@ class LanceDB(VectorStore):
 
         if self._embedding is None:
             raise ValueError(
-                "For MMR search, you must specify an embedding function on" "creation."
+                "For MMR search, you must specify an embedding function oncreation."
             )
 
         embedding = self._embedding.embed_query(query)
