@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import logging
-from typing import Any, Awaitable, Callable, Dict, List, Mapping, Optional, Union
+from collections.abc import Awaitable, Mapping
+from typing import Any, Callable, Optional, Union, cast
 
 import openai
 from langchain_core.language_models import LangSmithParams
 from langchain_core.utils import from_env, secret_from_env
 from pydantic import Field, SecretStr, model_validator
-from typing_extensions import Self, cast
+from typing_extensions import Self
 
 from langchain_openai.llms.base import BaseOpenAI
 
@@ -36,9 +37,9 @@ class AzureOpenAI(BaseOpenAI):
     )
     """Your Azure endpoint, including the resource.
 
-        Automatically inferred from env var `AZURE_OPENAI_ENDPOINT` if not provided.
+        Automatically inferred from env var ``AZURE_OPENAI_ENDPOINT`` if not provided.
 
-        Example: `https://example-resource.azure.openai.com/`
+        Example: ``'https://example-resource.azure.openai.com/'``
     """
     deployment_name: Union[str, None] = Field(default=None, alias="azure_deployment")
     """A model deployment. 
@@ -50,7 +51,7 @@ class AzureOpenAI(BaseOpenAI):
         alias="api_version",
         default_factory=from_env("OPENAI_API_VERSION", default=None),
     )
-    """Automatically inferred from env var `OPENAI_API_VERSION` if not provided."""
+    """Automatically inferred from env var ``OPENAI_API_VERSION`` if not provided."""
     # Check OPENAI_KEY for backwards compatibility.
     # TODO: Remove OPENAI_API_KEY support to avoid possible conflict when using
     # other forms of azure credentials.
@@ -65,16 +66,15 @@ class AzureOpenAI(BaseOpenAI):
     )
     """Your Azure Active Directory token.
 
-        Automatically inferred from env var `AZURE_OPENAI_AD_TOKEN` if not provided.
+        Automatically inferred from env var ``AZURE_OPENAI_AD_TOKEN`` if not provided.
 
-        For more:
-        https://www.microsoft.com/en-us/security/business/identity-access/microsoft-entra-id.
+        `For more, see this page <https://www.microsoft.com/en-us/security/business/identity-access/microsoft-entra-id>.`__
     """
     azure_ad_token_provider: Union[Callable[[], str], None] = None
     """A function that returns an Azure Active Directory token.
 
         Will be invoked on every sync request. For async requests,
-        will be invoked if `azure_ad_async_token_provider` is not provided.
+        will be invoked if ``azure_ad_async_token_provider`` is not provided.
     """
     azure_ad_async_token_provider: Union[Callable[[], Awaitable[str]], None] = None
     """A function that returns an Azure Active Directory token.
@@ -84,19 +84,19 @@ class AzureOpenAI(BaseOpenAI):
     openai_api_type: Optional[str] = Field(
         default_factory=from_env("OPENAI_API_TYPE", default="azure")
     )
-    """Legacy, for openai<1.0.0 support."""
+    """Legacy, for ``openai<1.0.0`` support."""
     validate_base_url: bool = True
     """For backwards compatibility. If legacy val openai_api_base is passed in, try to 
         infer if it is a base_url or azure_endpoint and update accordingly.
     """
 
     @classmethod
-    def get_lc_namespace(cls) -> List[str]:
+    def get_lc_namespace(cls) -> list[str]:
         """Get the namespace of the langchain object."""
         return ["langchain", "llms", "openai"]
 
     @property
-    def lc_secrets(self) -> Dict[str, str]:
+    def lc_secrets(self) -> dict[str, str]:
         return {
             "openai_api_key": "AZURE_OPENAI_API_KEY",
             "azure_ad_token": "AZURE_OPENAI_AD_TOKEN",
@@ -104,7 +104,7 @@ class AzureOpenAI(BaseOpenAI):
 
     @classmethod
     def is_lc_serializable(cls) -> bool:
-        """Return whether this model can be serialized by Langchain."""
+        """Return whether this model can be serialized by LangChain."""
         return True
 
     @model_validator(mode="after")
@@ -188,12 +188,12 @@ class AzureOpenAI(BaseOpenAI):
         }
 
     @property
-    def _invocation_params(self) -> Dict[str, Any]:
+    def _invocation_params(self) -> dict[str, Any]:
         openai_params = {"model": self.deployment_name}
         return {**openai_params, **super()._invocation_params}
 
     def _get_ls_params(
-        self, stop: Optional[List[str]] = None, **kwargs: Any
+        self, stop: Optional[list[str]] = None, **kwargs: Any
     ) -> LangSmithParams:
         """Get standard params for tracing."""
         params = super()._get_ls_params(stop=stop, **kwargs)
@@ -209,7 +209,7 @@ class AzureOpenAI(BaseOpenAI):
         return "azure"
 
     @property
-    def lc_attributes(self) -> Dict[str, Any]:
+    def lc_attributes(self) -> dict[str, Any]:
         return {
             "openai_api_type": self.openai_api_type,
             "openai_api_version": self.openai_api_version,

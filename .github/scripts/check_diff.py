@@ -16,7 +16,7 @@ LANGCHAIN_DIRS = [
     "libs/core",
     "libs/text-splitters",
     "libs/langchain",
-    "libs/community",
+    "libs/langchain_v1",
 ]
 
 # when set to True, we are ignoring core dependents
@@ -38,8 +38,7 @@ IGNORED_PARTNERS = [
 ]
 
 PY_312_MAX_PACKAGES = [
-    "libs/partners/huggingface",  # https://github.com/pytorch/pytorch/issues/130249
-    "libs/partners/voyageai",
+    "libs/partners/chroma", # https://github.com/chroma-core/chroma/issues/4382
 ]
 
 
@@ -121,7 +120,9 @@ def _get_configs_for_single_dir(job: str, dir_: str) -> List[Dict[str, str]]:
     if job == "test-pydantic":
         return _get_pydantic_test_configs(dir_)
 
-    if dir_ == "libs/core":
+    if job == "codspeed":
+        py_versions = ["3.12"]  # 3.13 is not yet supported
+    elif dir_ == "libs/core":
         py_versions = ["3.9", "3.10", "3.11", "3.12", "3.13"]
     # custom logic for specific directories
     elif dir_ == "libs/partners/milvus":
@@ -134,12 +135,6 @@ def _get_configs_for_single_dir(job: str, dir_: str) -> List[Dict[str, str]]:
     elif dir_ == "libs/langchain" and job == "extended-tests":
         py_versions = ["3.9", "3.13"]
 
-    elif dir_ == "libs/community" and job == "extended-tests":
-        py_versions = ["3.9", "3.12"]
-
-    elif dir_ == "libs/community" and job == "compile-integration-tests":
-        # community integration deps are slow in 3.12
-        py_versions = ["3.9", "3.11"]
     elif dir_ == ".":
         # unable to install with 3.13 because tokenizers doesn't support 3.13 yet
         py_versions = ["3.9", "3.12"]
@@ -184,11 +179,6 @@ def _get_pydantic_test_configs(
         else "0"
     )
 
-    custom_mins = {
-        # depends on pydantic-settings 2.4 which requires pydantic 2.7
-        "libs/community": 7,
-    }
-
     max_pydantic_minor = min(
         int(dir_max_pydantic_minor),
         int(core_max_pydantic_minor),
@@ -196,7 +186,6 @@ def _get_pydantic_test_configs(
     min_pydantic_minor = max(
         int(dir_min_pydantic_minor),
         int(core_min_pydantic_minor),
-        custom_mins.get(dir_, 0),
     )
 
     configs = [
@@ -224,6 +213,8 @@ def _get_configs_for_multi_dirs(
         )
     elif job == "extended-tests":
         dirs = list(dirs_to_run["extended-test"])
+    elif job == "codspeed":
+        dirs = list(dirs_to_run["codspeed"])
     else:
         raise ValueError(f"Unknown job: {job}")
 
@@ -239,6 +230,7 @@ if __name__ == "__main__":
         "lint": set(),
         "test": set(),
         "extended-test": set(),
+        "codspeed": set(),
     }
     docs_edited = False
 
@@ -262,6 +254,8 @@ if __name__ == "__main__":
             dirs_to_run["extended-test"].update(LANGCHAIN_DIRS)
             dirs_to_run["lint"].add(".")
 
+        if file.startswith("libs/core"):
+            dirs_to_run["codspeed"].add(f"libs/core")
         if any(file.startswith(dir_) for dir_ in LANGCHAIN_DIRS):
             # add that dir and all dirs after in LANGCHAIN_DIRS
             # for extended testing
@@ -300,6 +294,7 @@ if __name__ == "__main__":
                 if not filename.startswith(".")
             ] != ["README.md"]:
                 dirs_to_run["test"].add(f"libs/partners/{partner_dir}")
+                dirs_to_run["codspeed"].add(f"libs/partners/{partner_dir}")
             # Skip if the directory was deleted or is just a tombstone readme
         elif file == "libs/packages.yml":
             continue
@@ -325,6 +320,7 @@ if __name__ == "__main__":
             "compile-integration-tests",
             "dependencies",
             "test-pydantic",
+            "codspeed",
         ]
     }
     map_job_to_configs["test-doc-imports"] = (

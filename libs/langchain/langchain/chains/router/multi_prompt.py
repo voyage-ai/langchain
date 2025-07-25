@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Optional
 
 from langchain_core._api import deprecated
 from langchain_core.language_models import BaseLanguageModel
 from langchain_core.prompts import PromptTemplate
+from typing_extensions import override
 
 from langchain.chains import ConversationChain
 from langchain.chains.base import Chain
@@ -21,7 +22,7 @@ from langchain.chains.router.multi_prompt_prompt import MULTI_PROMPT_ROUTER_TEMP
     removal="1.0",
     message=(
         "Please see migration guide here for recommended implementation: "
-        "https://python.langchain.com/docs/versions/migrating_chains/multi_prompt_chain/"  # noqa: E501
+        "https://python.langchain.com/docs/versions/migrating_chains/multi_prompt_chain/"
     ),
 )
 class MultiPromptChain(MultiRouteChain):
@@ -142,14 +143,15 @@ class MultiPromptChain(MultiRouteChain):
     """  # noqa: E501
 
     @property
-    def output_keys(self) -> List[str]:
+    @override
+    def output_keys(self) -> list[str]:
         return ["text"]
 
     @classmethod
     def from_prompts(
         cls,
         llm: BaseLanguageModel,
-        prompt_infos: List[Dict[str, str]],
+        prompt_infos: list[dict[str, str]],
         default_chain: Optional[Chain] = None,
         **kwargs: Any,
     ) -> MultiPromptChain:
@@ -157,7 +159,7 @@ class MultiPromptChain(MultiRouteChain):
         destinations = [f"{p['name']}: {p['description']}" for p in prompt_infos]
         destinations_str = "\n".join(destinations)
         router_template = MULTI_PROMPT_ROUTER_TEMPLATE.format(
-            destinations=destinations_str
+            destinations=destinations_str,
         )
         router_prompt = PromptTemplate(
             template=router_template,

@@ -9,9 +9,12 @@ import nbformat
 from nbconvert.exporters import MarkdownExporter
 from nbconvert.preprocessors import Preprocessor
 
+HIDE_IN_NB_MAGIC_OPEN = "<!-- HIDE_IN_NB"
+HIDE_IN_NB_MAGIC_CLOSE = "HIDE_IN_NB -->"
+
 
 class EscapePreprocessor(Preprocessor):
-    def preprocess_cell(self, cell, resources, cell_index):
+    def preprocess_cell(self, cell, resources, index):
         if cell.cell_type == "markdown":
             # rewrite .ipynb links to .md
             cell.source = re.sub(
@@ -61,7 +64,7 @@ class ExtractAttachmentsPreprocessor(Preprocessor):
     outputs are returned in the 'resources' dictionary.
     """
 
-    def preprocess_cell(self, cell, resources, cell_index):
+    def preprocess_cell(self, cell, resources, index):
         """
         Apply a transformation on each cell,
         Parameters
@@ -117,11 +120,19 @@ class CustomRegexRemovePreprocessor(Preprocessor):
         return nb, resources
 
 
+class UnHidePreprocessor(Preprocessor):
+    def preprocess_cell(self, cell, resources, index):
+        cell.source = cell.source.replace(HIDE_IN_NB_MAGIC_OPEN, "")
+        cell.source = cell.source.replace(HIDE_IN_NB_MAGIC_CLOSE, "")
+        return cell, resources
+
+
 exporter = MarkdownExporter(
     preprocessors=[
         EscapePreprocessor,
         ExtractAttachmentsPreprocessor,
         CustomRegexRemovePreprocessor,
+        UnHidePreprocessor,
     ],
     template_name="mdoutput",
     extra_template_basedirs=["./scripts/notebook_convert_templates"],
@@ -164,8 +175,23 @@ def _modify_frontmatter(
 def _convert_notebook(
     notebook_path: Path, output_path: Path, intermediate_docs_dir: Path
 ) -> Path:
-    with open(notebook_path) as f:
-        nb = nbformat.read(f, as_version=4)
+    import json
+    import uuid
+
+    with open(notebook_path, "r", encoding="utf-8") as f:
+        nb_json = json.load(f)
+
+    # Fix missing and duplicate cell IDs before nbformat validation
+    seen_ids = set()
+    for cell in nb_json.get("cells", []):
+        if "id" not in cell or not cell.get("id") or cell.get("id") in seen_ids:
+            cell["id"] = str(uuid.uuid4())[:8]
+        seen_ids.add(cell["id"])
+
+    nb = nbformat.reads(json.dumps(nb_json), as_version=4)
+
+    # Upgrade notebook format
+    nb = nbformat.v4.upgrade(nb)
 
     body, resources = exporter.from_notebook_node(nb)
 

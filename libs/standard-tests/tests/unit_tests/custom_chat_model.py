@@ -1,4 +1,5 @@
-from typing import Any, Dict, Iterator, List, Optional
+from collections.abc import Iterator
+from typing import Any, Optional
 
 from langchain_core.callbacks import (
     CallbackManagerForLLMRun,
@@ -40,13 +41,13 @@ class ChatParrotLink(BaseChatModel):
     temperature: Optional[float] = None
     max_tokens: Optional[int] = None
     timeout: Optional[int] = None
-    stop: Optional[List[str]] = None
+    stop: Optional[list[str]] = None
     max_retries: int = 2
 
     def _generate(
         self,
-        messages: List[BaseMessage],
-        stop: Optional[List[str]] = None,
+        messages: list[BaseMessage],
+        stop: Optional[list[str]] = None,
         run_manager: Optional[CallbackManagerForLLMRun] = None,
         **kwargs: Any,
     ) -> ChatResult:
@@ -67,6 +68,9 @@ class ChatParrotLink(BaseChatModel):
         """
         # Replace this with actual logic to generate a response from a list
         # of messages.
+        _ = stop  # Mark as used to avoid unused variable warning
+        _ = run_manager  # Mark as used to avoid unused variable warning
+        _ = kwargs  # Mark as used to avoid unused variable warning
         last_message = messages[-1]
         tokens = last_message.content[: self.parrot_buffer_length]
         ct_input_tokens = sum(len(message.content) for message in messages)
@@ -76,6 +80,7 @@ class ChatParrotLink(BaseChatModel):
             additional_kwargs={},  # Used to add additional payload to the message
             response_metadata={  # Use for response metadata
                 "time_in_seconds": 3,
+                "model_name": self.model_name,
             },
             usage_metadata={
                 "input_tokens": ct_input_tokens,
@@ -90,8 +95,8 @@ class ChatParrotLink(BaseChatModel):
 
     def _stream(
         self,
-        messages: List[BaseMessage],
-        stop: Optional[List[str]] = None,
+        messages: list[BaseMessage],
+        stop: Optional[list[str]] = None,
         run_manager: Optional[CallbackManagerForLLMRun] = None,
         **kwargs: Any,
     ) -> Iterator[ChatGenerationChunk]:
@@ -112,6 +117,8 @@ class ChatParrotLink(BaseChatModel):
                   downstream and understand why generation stopped.
             run_manager: A run manager with callbacks for the LLM.
         """
+        _ = stop  # Mark as used to avoid unused variable warning
+        _ = kwargs  # Mark as used to avoid unused variable warning
         last_message = messages[-1]
         tokens = str(last_message.content[: self.parrot_buffer_length])
         ct_input_tokens = sum(len(message.content) for message in messages)
@@ -138,7 +145,10 @@ class ChatParrotLink(BaseChatModel):
 
         # Let's add some other information (e.g., response metadata)
         chunk = ChatGenerationChunk(
-            message=AIMessageChunk(content="", response_metadata={"time_in_sec": 3})
+            message=AIMessageChunk(
+                content="",
+                response_metadata={"time_in_sec": 3, "model_name": self.model_name},
+            )
         )
         if run_manager:
             # This is optional in newer versions of LangChain
@@ -152,7 +162,7 @@ class ChatParrotLink(BaseChatModel):
         return "echoing-chat-model-advanced"
 
     @property
-    def _identifying_params(self) -> Dict[str, Any]:
+    def _identifying_params(self) -> dict[str, Any]:
         """Return a dictionary of identifying parameters.
 
         This information is used by the LangChain callback system, which
